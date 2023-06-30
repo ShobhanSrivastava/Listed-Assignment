@@ -36,4 +36,3 @@
          - [x] /google/callback
          - [x] /logout
          - [x] /success
-    - [ ] 

@@ -29,8 +29,6 @@ async function autoReply(user) {
     // Fetch the unread threads of the user
     const threads = await fetchUnreadEmails(gmailClient);
 
-
-    let count = 0;
     // For every thread in the threads array
     threads.forEach(async (thread) => {
         // Fetch all the emails in the thread using the threadId 
@@ -50,10 +48,9 @@ async function autoReply(user) {
 
             // Encode the email using base 64 encoding
             const encodedEmail = Buffer.from(emailToSend).toString('base64');
-            count++;
 
             // Send the email and update its label
-            if(count <= 2) sendEmailAndUpdateLabel(gmailClient, encodedEmail);
+            sendEmailAndUpdateLabel(gmailClient, encodedEmail);
         }
     })
 }
