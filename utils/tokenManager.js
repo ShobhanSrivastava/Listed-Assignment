@@ -22,10 +22,10 @@ async function accessTokenRenew(refreshToken) {
   }
 }
 
-// Checks if the access token has expired or is about to expire
+// Checks if the access token has expired
 function checkExpired(expirationTime) {
-  // The token is expired or is about to expire
-  if(expirationTime < Date.now() || expirationTime > Date.now() - 120000) return true;
+  // The token is expired
+  if(expirationTime < Date.now()) return true;
 
   return false;
 }

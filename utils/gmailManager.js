@@ -1,12 +1,14 @@
 import { google } from 'googleapis';
 import { getFromHeaderOfEmail, threadHasPreviousSentEmail, getSenderEmail, createEmail } from './utility.js';
+import logger from '../loggers/logger.js';
+
 const OAuth2 = google.auth.OAuth2;
 
 // Create new OAuth2 client
 const client = new OAuth2();
 
 // This is the label we want in our threads
-const labelName = 'check after vacations';
+const labelName = 'vacations';
 
 // This function is reponsible for auto reply
 async function autoReply(user) {
@@ -24,7 +26,7 @@ async function autoReply(user) {
 
     // First we check if the user has 'check after vacation' label or not
     // If it is not present, we create the label using this function
-    await findOrCreateLabel(gmailClient);
+    const labelId = await findOrCreateLabel(gmailClient);
 
     // Fetch the unread threads of the user
     const threads = await fetchUnreadEmails(gmailClient);
@@ -50,7 +52,8 @@ async function autoReply(user) {
             const encodedEmail = Buffer.from(emailToSend).toString('base64');
 
             // Send the email and update its label
-            sendEmailAndUpdateLabel(gmailClient, encodedEmail);
+            sendEmail(gmailClient, encodedEmail);
+            await modifyLabel(gmailClient, thread.threadId, labelId);
         }
     })
 }
@@ -62,14 +65,18 @@ async function findOrCreateLabel(gmailClient) {
         const labelResponse = await gmailClient.users.labels.list({ userId: 'me' });
         const labels = labelResponse.data.labels || [];
     
-        // Check if the label already exists
-        const existingLabel = labels.find(label => label.name === labelName);
-        if (existingLabel) {
-            console.log(`Label '${labelName}' already exists.`);
-        }
-        else {
+        // Check if the label already exists and return its labelId
+        let labelId;
+
+        labels.forEach(label => {
+            if(label.name === labelName) {
+                labelId = label.id;
+            }
+        })
+
+        if (!labelId)  {
             // Create the label if it doesn't exist
-            gmailClient.users.labels.create({
+            const response = await gmailClient.users.labels.create({
               userId: 'me',
               resource: {
                 name: labelName,
@@ -78,8 +85,11 @@ async function findOrCreateLabel(gmailClient) {
               }
             });
         
-            console.log(`Label '${labelName}' created successfully.`);
+            logger.info(`Label '${labelName}' created successfully.`);
+            labelId = response.data.id;
         }
+
+        return labelId;
     } catch (error) {
         console.error('Error creating label:', error);
         throw error;
@@ -122,22 +132,37 @@ async function fetchAllEmailsInThread(gmailClient, threadId) {
 }
 
 // Sends an email and updates the label
-async function sendEmailAndUpdateLabel(gmailClient, email) {
+async function sendEmail(gmailClient, email) {
     try {
         // Send the email and apply the label
         const response = await gmailClient.users.messages.send({
           userId: 'me',
           requestBody: {
             raw: email,
-            label: labelName
           }
         });
     
-        console.log('Email sent:', response.data);
+        logger.info('Email sent');
         return response.data;
     } catch (error) {
-        console.error('Error sending email:', error);
+        logger.error('Error sending email:', error);
         throw error;
+    }
+}
+
+async function modifyLabel(gmailClient, threadId, labelId) {
+    try {
+        const response = await gmailClient.users.threads.modify({
+          userId: 'me',
+          id: threadId,
+          requestBody: {
+            addLabelIds: [labelId]
+          },
+        });
+      
+        logger.info('Thread label modified', response.data);
+    } catch (error) {
+        console.error('Error modifying thread label:', error);
     }
 }
 

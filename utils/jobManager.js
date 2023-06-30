@@ -18,7 +18,6 @@ function startJob(user) {
     runningJobs[userId] = setTimeout(async function run() {
         // The user is present but the access token has expired or is about to expire
         if (checkExpired(user.expirationTime)) {
-            logger.info('Expired Access Token / About to expire');
             // Get the new access token
             const newToken = await accessTokenRenew(user.refreshToken);
             user.accessToken = newToken;
@@ -43,8 +42,8 @@ function startJob(user) {
 
         await autoReply(user);
 
-        randomTime = randomBetween(45, 120);
-        stopJob(userId);
+        randomTime = randomBetween(10, 15);
+        stopJob(user);
         runningJobs[userId] = setTimeout(run, randomTime);
     }, randomTime);
 }

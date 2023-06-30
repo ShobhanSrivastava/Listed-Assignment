@@ -2,7 +2,7 @@ import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { OAUTH_CLIENT_ID, OAUTH_CLIENT_SECRET, PORT } from './envConfig.js';
 import { User } from '../models/index.js';
 import logger from '../loggers/logger.js';
-import {accessTokenRenew, checkExpired} from '../utils/tokenManager.js';
+import { accessTokenRenew, checkExpired } from '../utils/tokenManager.js';
 
 function passportInit(passport) {
     // Passport configuration using Google Strategy
@@ -43,7 +43,7 @@ function passportInit(passport) {
                     }
                   }
 
-                  // The user is present but the access token has expired or is about to expire
+                  // The user is present but the access token has expired
                   if (checkExpired(user.expirationTime)) {
                     logger.info('Expired Access Token / About to expire');
                     // Get the new access token
@@ -56,7 +56,6 @@ function passportInit(passport) {
                         { $set: { accessToken: newToken, expirationTime: expirationTime }},
                         { new: true }
                       )
-                      console.log(updatedUser);
                       return done(null, updatedUser);
                     }
                     catch(error) {

@@ -39,7 +39,7 @@ app.use('/auth', authRouter); // Separate route handler for routes starting with
 
 // Homepage handling
 app.get('/', (req, res) => {
-    res.redirect('http://www.google.com');
+    res.redirect(`http://127.0.0.1:${PORT}/auth/login`);
 });
 
 // Unavailable path handling
